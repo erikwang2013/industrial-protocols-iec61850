@@ -21,7 +21,7 @@ use Erikwang2013\IndustrialProtocols\Protocol\ProtocolInterface;
 class Iec61850Protocol implements ProtocolInterface
 {
     public function getName(): string { return 'iec61850'; }
-    public function getVersion(): string { return '1.0.0'; }
+    public function getVersion(): string { return '1.1.1'; }
     public function getSupportedVariants(): array { return ['mms', 'goose', 'sv']; }
     public function getDefaultPort(): int { return 102; }
 
