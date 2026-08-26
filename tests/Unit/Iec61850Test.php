@@ -134,4 +134,62 @@ class Iec61850Test extends TestCase
         $this->assertSame('READ_REQUEST', $data['pdu_type']);
         $this->assertSame('Test/LLN0', $data['data']['data_path']);
     }
+
+    public function test_frame_too_short_throws(): void
+    {
+        $this->expectException(\Erikwang2013\IndustrialProtocols\Exception\FrameException::class);
+        Iec61850Frame::fromBytes("\x03\x00");
+    }
+
+    public function test_invalid_tpkt_version_throws(): void
+    {
+        $this->expectException(\Erikwang2013\IndustrialProtocols\Exception\FrameException::class);
+        Iec61850Frame::fromBytes("\x04\x00\x00\x04\xA8\x00");
+    }
+
+    public function test_build_data_path_roundtrip(): void
+    {
+        $path = 'IED1/XCBR1.ST.Pos.stVal';
+        $this->assertSame($path, Iec61850Frame::buildDataPath(Iec61850Frame::parseDataPath($path)));
+    }
+
+    public function test_parse_data_path_without_slash(): void
+    {
+        // No '/' separator: the whole string lands in 'ld' and the remaining
+        // components stay empty (parser requires the LD/LN separator)
+        $parsed = Iec61850Frame::parseDataPath('LLN0.OR.Health.stVal');
+        $this->assertSame('LLN0.OR.Health.stVal', $parsed['ld']);
+        $this->assertSame('', $parsed['ln']);
+        $this->assertSame('', $parsed['fc']);
+        $this->assertSame('', $parsed['do']);
+        $this->assertSame('', $parsed['da']);
+    }
+
+    public function test_read_response_roundtrip(): void
+    {
+        $frame = new Iec61850Frame(Iec61850Frame::PDU_READ_RESPONSE, 7, [], 'data');
+        $decoded = Iec61850Frame::fromBytes($frame->toBytes());
+        $this->assertSame('READ_RESPONSE', $decoded->getPduName());
+        $this->assertSame(7, $decoded->getInvokeId());
+        $this->assertSame('data', $decoded->getPayload());
+    }
+
+    public function test_conclude_roundtrip(): void
+    {
+        $decoded = Iec61850Frame::fromBytes(Iec61850Frame::conclude()->toBytes());
+        $this->assertSame('CONCLUDE_REQUEST', $decoded->getPduName());
+    }
+
+    public function test_pdu_name_unknown(): void
+    {
+        $this->assertSame('UNKNOWN', Iec61850Frame::pduName(0x01));
+    }
+
+    public function test_invoke_id_encoding_multibyte(): void
+    {
+        // Invoke id 300 requires a 2-byte INTEGER
+        $frame = Iec61850Frame::readRequest('IED1/LLN0', 300);
+        $decoded = Iec61850Frame::fromBytes($frame->toBytes());
+        $this->assertSame(300, $decoded->getInvokeId());
+    }
 }
