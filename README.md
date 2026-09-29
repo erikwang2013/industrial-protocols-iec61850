@@ -40,7 +40,7 @@ $conn->read('IED1/MMXU1.MX.PhV.phsA');  // 电压 A 相
 
 ## 兼容框架
 
-Laravel / Webman / Hyperf / ThinkPHP / Yii2 / Plain PHP
+Laravel / Webman / Hyperf / ThinkPHP / Yii2 / Yii3 / Plain PHP
 
 ## 系统要求
 
